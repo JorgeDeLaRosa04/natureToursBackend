@@ -12,29 +12,31 @@ import java.util.Optional;
 @Service
 public class UserServiceImpl implements IUserService {
 
+    @Autowired
+    private IUserRepository uR;
 
     @Override
     public List<Users> list() {
-        return List.of();
+        return uR.findAll();
     }
 
     @Override
     public Optional<Users> listId(Long id) {
-        return Optional.empty();
+        return uR.findById(id);
     }
 
     @Override
     public Users insert(Users u) {
-        return null;
+        return uR.save(u);
     }
 
     @Override
     public void update(Users u) {
-
+        uR.save(u);
     }
 
     @Override
     public void delete(Long id) {
-
+        uR.deleteById(id);
     }
 }
