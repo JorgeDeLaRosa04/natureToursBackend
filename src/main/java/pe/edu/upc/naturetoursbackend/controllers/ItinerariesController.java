@@ -51,7 +51,7 @@ public class ItinerariesController {
     @PostMapping("/nuevo")
     public ResponseEntity<?> registrar(@RequestBody ItinerariesDTO dto) {
 
-        // Validación: endDate no debe ser menor a startDate
+
         if (dto.getEndDate() != null && dto.getStartDate() != null) {
             if (dto.getEndDate().before(dto.getStartDate())) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
@@ -59,7 +59,7 @@ public class ItinerariesController {
             }
         }
 
-        // Validación: totalEstimatedPrice no debe ser negativo
+
         if (dto.getTotalEstimatedPrice() != null && dto.getTotalEstimatedPrice().compareTo(BigDecimal.ZERO) < 0) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body("El precio estimado total (totalEstimatedPrice) no puede ser negativo");
@@ -120,7 +120,7 @@ public class ItinerariesController {
             }
         }
 
-        // Validación: totalEstimatedPrice no debe ser negativo
+
         if (dto.getTotalEstimatedPrice() != null && dto.getTotalEstimatedPrice().compareTo(BigDecimal.ZERO) < 0) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body("El precio estimado total (totalEstimatedPrice) no puede ser negativo");
@@ -134,7 +134,7 @@ public class ItinerariesController {
         i.setNumPeople(dto.getNumPeople());
         i.setTotalEstimatedPrice(dto.getTotalEstimatedPrice());
 
-        // Buscar y asignar el usuario si cambió
+
         if (dto.getIdUser() != null) {
             Optional<Users> userOptional = uS.listId(dto.getIdUser());
             if (userOptional.isPresent()) {
@@ -145,7 +145,7 @@ public class ItinerariesController {
             }
         }
 
-        // Buscar y asignar el quiz profile si cambió
+
         if (dto.getIdQuiz() != 0) {
             Optional<QuizProfiles> quizOptional = qS.listId(dto.getIdQuiz());
             if (quizOptional.isPresent()) {
