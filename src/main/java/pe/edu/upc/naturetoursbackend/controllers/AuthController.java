@@ -42,9 +42,11 @@ public class AuthController {
             if (request.getPassword() == null || request.getPassword().trim().isEmpty()) {
                 return ResponseEntity.badRequest().body(new MessageResponse("La contraseña es obligatoria"));
             }
+
             if (request.getPassword().length() < 8) {
                 return ResponseEntity.badRequest().body(new MessageResponse("La contraseña debe tener al menos 8 caracteres"));
             }
+
 
             authService.register(request.getUsername(), request.getEmail(), request.getPassword());
             
@@ -86,6 +88,7 @@ public class AuthController {
         }
     }
 
+    /*
     @PostMapping("/resend-verification")
     @Operation(summary = "Reenviar correo de verificación", description = "Reenvía el correo de verificación a un usuario que no ha verificado su cuenta.")
     @ApiResponses(value = {
@@ -110,7 +113,7 @@ public class AuthController {
             ));
         }
     }
-
+    */
     @PostMapping("/forgot-password")
     @Operation(summary = "Recuperar contraseña", description = "Envía un correo con instrucciones para restablecer la contraseña.")
     @ApiResponses(value = {

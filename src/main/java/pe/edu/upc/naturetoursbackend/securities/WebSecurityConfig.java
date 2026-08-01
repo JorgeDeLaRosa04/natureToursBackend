@@ -67,7 +67,8 @@ public class WebSecurityConfig {
                                 "/api-tour/**",
                                 "/api-itineraries/**",
                                 "/api-quiz/**",
-                                "/api-users/**"
+                                "/api-users/**",
+                                "/api/auth/**"
                         ).permitAll()
                         .anyRequest().authenticated()
                 )

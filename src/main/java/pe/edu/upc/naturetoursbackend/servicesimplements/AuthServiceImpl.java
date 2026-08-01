@@ -10,6 +10,9 @@ import pe.edu.upc.naturetoursbackend.entities.Users;
 import pe.edu.upc.naturetoursbackend.repositories.IUserRepository;
 import pe.edu.upc.naturetoursbackend.servicesinterfaces.IAuthService;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.util.Base64;
@@ -44,10 +47,32 @@ public class AuthServiceImpl implements IAuthService {
     }
 
     /**
-     * Genera el hash de un token usando BCrypt
+     * Genera el hash de un token usando SHA-256.
+     * Se usa SHA-256 (en lugar de BCrypt) porque los tokens son aleatorios de alta entropía
+     * y BCrypt limita la entrada a 72 bytes, lo que provocaba el error
+     * "password cannot be more than 72 bytes".
      */
     private String hashToken(String token) {
-        return passwordEncoder.encode(token);
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] hashBytes = digest.digest(token.getBytes(StandardCharsets.UTF_8));
+            return Base64.getEncoder().encodeToString(hashBytes);
+        } catch (NoSuchAlgorithmException e) {
+            throw new IllegalStateException("Algoritmo SHA-256 no disponible", e);
+        }
+    }
+
+    /**
+     * Verifica si un token coincide con un hash almacenado (SHA-256).
+     */
+    private boolean verifyTokenHash(String token, String storedHash) {
+        if (storedHash == null) {
+            return false;
+        }
+        return MessageDigest.isEqual(
+            hashToken(token).getBytes(StandardCharsets.UTF_8),
+            storedHash.getBytes(StandardCharsets.UTF_8)
+        );
     }
 
     /**
@@ -117,8 +142,6 @@ public class AuthServiceImpl implements IAuthService {
             return false;
         }
 
-        String tokenHash = hashToken(token);
-
         // Buscar todos los usuarios y verificar manualmente (no hay índice para esto)
         // En producción se debería optimizar con una consulta personalizada
         var allUsers = userRepository.findAll();
@@ -127,8 +150,8 @@ public class AuthServiceImpl implements IAuthService {
                 user.getVerificationTokenExpiration() != null &&
                 user.getVerificationTokenExpiration().isAfter(LocalDateTime.now())) {
                 
-                // Verificar el hash del token
-                if (passwordEncoder.matches(token, user.getVerificationTokenHash())) {
+                // Verificar el hash del token (SHA-256)
+                if (verifyTokenHash(token, user.getVerificationTokenHash())) {
                     // Usuario encontrado y token válido
                     user.setEmailVerified(true);
                     user.setEnabled(true);
@@ -225,8 +248,6 @@ public class AuthServiceImpl implements IAuthService {
             throw new IllegalArgumentException("La contraseña debe tener al menos 8 caracteres");
         }
 
-        String tokenHash = hashToken(token);
-
         // Buscar usuario con token válido
         var allUsers = userRepository.findAll();
         for (Users user : allUsers) {
@@ -234,8 +255,8 @@ public class AuthServiceImpl implements IAuthService {
                 user.getResetPasswordTokenExpiration() != null &&
                 user.getResetPasswordTokenExpiration().isAfter(LocalDateTime.now())) {
                 
-                // Verificar el hash del token
-                if (passwordEncoder.matches(token, user.getResetPasswordTokenHash())) {
+                // Verificar el hash del token (SHA-256)
+                if (verifyTokenHash(token, user.getResetPasswordTokenHash())) {
                     // Token válido, actualizar contraseña
                     user.setPassword(passwordEncoder.encode(newPassword));
                     user.setResetPasswordTokenHash(null);

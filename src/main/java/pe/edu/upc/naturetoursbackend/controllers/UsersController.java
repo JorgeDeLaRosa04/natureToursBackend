@@ -41,6 +41,7 @@ public class UsersController {
         return ResponseEntity.notFound().build();
     }
 
+    /*
     @PostMapping("/crear-cuenta")
     public ResponseEntity<UserResponseDTO> insert(@RequestBody UserInsertDTO insertDTO) {
         Users user = new Users();
@@ -72,6 +73,7 @@ public class UsersController {
 
         return ResponseEntity.ok("Usuario actualizado correctamente");
     }
+    */
 
     @DeleteMapping("/{id}")
     public ResponseEntity<String> eliminar(@PathVariable Long id) {
