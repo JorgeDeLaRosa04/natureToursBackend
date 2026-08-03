@@ -21,10 +21,14 @@ public class JwtUserDetailsService implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        Users user = repo.findOneByUsername(username);
+        Users user = repo.findOneByEmail(username);
 
         if (user == null) {
-            throw new UsernameNotFoundException(String.format("User not exists", username));
+            throw new UsernameNotFoundException("User not exists");
+        }
+
+        if (!user.getEmailVerified()) {
+            throw new UsernameNotFoundException("Email not verified");
         }
 
         List<GrantedAuthority> roles = new ArrayList<>();

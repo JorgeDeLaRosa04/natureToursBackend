@@ -12,6 +12,8 @@ import pe.edu.upc.naturetoursbackend.entities.Users;
 public interface IUserRepository extends JpaRepository<Users, Long> {
     public Users findOneByUsername(String username);
 
+    public Users findOneByEmail(String email);
+
     //BUSCAR POR NOMBRE
     @Query("select count(u.username) from Users u where u.username =:username")
     public int buscarUsername(@Param("username") String nombre);
