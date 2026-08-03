@@ -6,15 +6,20 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import pe.edu.upc.naturetoursbackend.dtos.ItinerariesDTO;
+import pe.edu.upc.naturetoursbackend.dtos.ItineraryItemDTO;
 import pe.edu.upc.naturetoursbackend.entities.Itineraries;
+import pe.edu.upc.naturetoursbackend.entities.ItineraryItems;
 import pe.edu.upc.naturetoursbackend.entities.QuizProfiles;
+import pe.edu.upc.naturetoursbackend.entities.Tours;
 import pe.edu.upc.naturetoursbackend.entities.Users;
 import pe.edu.upc.naturetoursbackend.servicesinterfaces.IItinerariesService;
 import pe.edu.upc.naturetoursbackend.servicesinterfaces.IQuizProfileService;
+import pe.edu.upc.naturetoursbackend.servicesinterfaces.ITourService;
 import pe.edu.upc.naturetoursbackend.servicesinterfaces.IUserService;
 
 import java.math.BigDecimal;
-import java.util.Date;
+import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -31,6 +36,9 @@ public class ItinerariesController {
 
     @Autowired
     private IQuizProfileService qS;
+
+    @Autowired
+    private ITourService tS;
 
     @GetMapping("/lista")
     public ResponseEntity<List<ItinerariesDTO>> listar() {
@@ -51,41 +59,79 @@ public class ItinerariesController {
     @PostMapping("/nuevo")
     public ResponseEntity<?> registrar(@RequestBody ItinerariesDTO dto) {
 
-
         if (dto.getEndDate() != null && dto.getStartDate() != null) {
-            if (dto.getEndDate().before(dto.getStartDate())) {
+            if (dto.getEndDate().isBefore(dto.getStartDate())) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                         .body("La fecha de fin (endDate) no puede ser menor a la fecha de inicio (startDate)");
             }
         }
 
-
-        if (dto.getTotalEstimatedPrice() != null && dto.getTotalEstimatedPrice().compareTo(BigDecimal.ZERO) < 0) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body("El precio estimado total (totalEstimatedPrice) no puede ser negativo");
-        }
-
-        ModelMapper m = new ModelMapper();
-        Itineraries i = m.map(dto, Itineraries.class);
-
-        // Buscar y asignar el usuario
         Optional<Users> userOptional = uS.listId(dto.getIdUser());
         if (userOptional.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body("Usuario no encontrado");
         }
-        i.setUser(userOptional.get());
 
-        // Buscar y asignar el quiz profile
         Optional<QuizProfiles> quizOptional = qS.listId(dto.getIdQuiz());
         if (quizOptional.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body("Quiz Profile no encontrado");
         }
-        i.setQuiz(quizOptional.get());
 
-        Itineraries itinerarioGuardado = iS.insert(i);
+        ModelMapper m = new ModelMapper();
+        Itineraries itinerario = new Itineraries();
+        itinerario.setTitle(dto.getTitle());
+        itinerario.setStartDate(dto.getStartDate());
+        itinerario.setEndDate(dto.getEndDate());
+        itinerario.setNumPeople(dto.getNumPeople());
+        itinerario.setUser(userOptional.get());
+        itinerario.setQuiz(quizOptional.get());
+
+        BigDecimal totalEstimatedPrice = BigDecimal.ZERO;
+        List<ItineraryItems> itemsList = new ArrayList<>();
+
+        if (dto.getItems() != null && !dto.getItems().isEmpty()) {
+            for (ItineraryItemDTO itemDto : dto.getItems()) {
+                Optional<Tours> tourOptional = tS.listId(itemDto.getTourId());
+                if (tourOptional.isEmpty()) {
+                    return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                            .body("Tour con ID " + itemDto.getTourId() + " no encontrado");
+                }
+
+                Tours tour = tourOptional.get();
+                BigDecimal priceAtMoment = tour.getPrice().multiply(BigDecimal.valueOf(itemDto.getNumPeopleForTour()));
+
+                ItineraryItems item = new ItineraryItems();
+                item.setTour(tour);
+                item.setPlannedDate(itemDto.getPlannedDate());
+                item.setNumPeopleForTour(itemDto.getNumPeopleForTour());
+                item.setPriceAtMoment(priceAtMoment);
+
+                itemsList.add(item);
+                totalEstimatedPrice = totalEstimatedPrice.add(priceAtMoment);
+            }
+        }
+
+        itinerario.setItems(itemsList);
+        itinerario.setTotalEstimatedPrice(totalEstimatedPrice);
+
+        Itineraries itinerarioGuardado = iS.insert(itinerario);
+
         ItinerariesDTO responseDTO = m.map(itinerarioGuardado, ItinerariesDTO.class);
+        List<ItineraryItemDTO> itemsResponseDTO = itinerarioGuardado.getItems()
+                .stream()
+                .map(item -> {
+                    ItineraryItemDTO itemDto = new ItineraryItemDTO();
+                    itemDto.setId(item.getId());
+                    itemDto.setTourId(item.getTour().getId());
+                    itemDto.setPlannedDate(item.getPlannedDate());
+                    itemDto.setNumPeopleForTour(item.getNumPeopleForTour());
+                    itemDto.setPriceAtMoment(item.getPriceAtMoment());
+                    return itemDto;
+                })
+                .collect(Collectors.toList());
+        responseDTO.setItems(itemsResponseDTO);
+
         return ResponseEntity.status(HttpStatus.CREATED).body(responseDTO);
     }
 
@@ -95,7 +141,23 @@ public class ItinerariesController {
         Optional<Itineraries> itinerario = iS.listId(id);
 
         if (itinerario.isPresent()) {
-            ItinerariesDTO dto = m.map(itinerario.get(), ItinerariesDTO.class);
+            Itineraries entity = itinerario.get();
+            ItinerariesDTO dto = m.map(entity, ItinerariesDTO.class);
+            
+            List<ItineraryItemDTO> itemsDTO = entity.getItems()
+                    .stream()
+                    .map(item -> {
+                        ItineraryItemDTO itemDto = new ItineraryItemDTO();
+                        itemDto.setId(item.getId());
+                        itemDto.setTourId(item.getTour().getId());
+                        itemDto.setPlannedDate(item.getPlannedDate());
+                        itemDto.setNumPeopleForTour(item.getNumPeopleForTour());
+                        itemDto.setPriceAtMoment(item.getPriceAtMoment());
+                        return itemDto;
+                    })
+                    .collect(Collectors.toList());
+            dto.setItems(itemsDTO);
+            
             return ResponseEntity.ok(dto);
         } else {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
@@ -112,18 +174,11 @@ public class ItinerariesController {
                     .body("Itinerario no encontrado");
         }
 
-        // Validación: endDate no debe ser menor a startDate
         if (dto.getEndDate() != null && dto.getStartDate() != null) {
-            if (dto.getEndDate().before(dto.getStartDate())) {
+            if (dto.getEndDate().isBefore(dto.getStartDate())) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                         .body("La fecha de fin (endDate) no puede ser menor a la fecha de inicio (startDate)");
             }
-        }
-
-
-        if (dto.getTotalEstimatedPrice() != null && dto.getTotalEstimatedPrice().compareTo(BigDecimal.ZERO) < 0) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body("El precio estimado total (totalEstimatedPrice) no puede ser negativo");
         }
 
         Itineraries i = existente.get();
@@ -134,7 +189,6 @@ public class ItinerariesController {
         i.setNumPeople(dto.getNumPeople());
         i.setTotalEstimatedPrice(dto.getTotalEstimatedPrice());
 
-
         if (dto.getIdUser() != null) {
             Optional<Users> userOptional = uS.listId(dto.getIdUser());
             if (userOptional.isPresent()) {
@@ -144,7 +198,6 @@ public class ItinerariesController {
                         .body("Usuario no encontrado");
             }
         }
-
 
         if (dto.getIdQuiz() != 0) {
             Optional<QuizProfiles> quizOptional = qS.listId(dto.getIdQuiz());

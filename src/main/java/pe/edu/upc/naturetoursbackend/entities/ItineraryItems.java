@@ -1,11 +1,10 @@
 package pe.edu.upc.naturetoursbackend.entities;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-
 import java.math.BigDecimal;
-import java.util.Date;
+import java.time.LocalDate;
 
 @Entity
 @Table(name = "itinerary_items")
@@ -16,6 +15,7 @@ public class ItineraryItems {
 
     @ManyToOne
     @JoinColumn(name = "itinerary_id", nullable = false)
+    @JsonIgnore
     private Itineraries itinerary;
 
     @ManyToOne
@@ -23,7 +23,7 @@ public class ItineraryItems {
     private Tours tour;
 
     @Column(name = "planned_date", nullable = false)
-    private Date plannedDate;
+    private LocalDate plannedDate;
 
     @Column(name = "num_people_for_tour", nullable = false)
     private int numPeopleForTour;
@@ -34,7 +34,7 @@ public class ItineraryItems {
     public ItineraryItems() {
     }
 
-    public ItineraryItems(int id, Itineraries itinerary, Tours tour, Date plannedDate, int numPeopleForTour, BigDecimal priceAtMoment) {
+    public ItineraryItems(int id, Itineraries itinerary, Tours tour, LocalDate plannedDate, int numPeopleForTour, BigDecimal priceAtMoment) {
         this.id = id;
         this.itinerary = itinerary;
         this.tour = tour;
@@ -67,11 +67,11 @@ public class ItineraryItems {
         this.tour = tour;
     }
 
-    public Date getPlannedDate() {
+    public LocalDate getPlannedDate() {
         return plannedDate;
     }
 
-    public void setPlannedDate(Date plannedDate) {
+    public void setPlannedDate(LocalDate plannedDate) {
         this.plannedDate = plannedDate;
     }
 

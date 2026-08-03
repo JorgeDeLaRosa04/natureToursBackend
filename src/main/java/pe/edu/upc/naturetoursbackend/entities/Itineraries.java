@@ -1,9 +1,13 @@
 package pe.edu.upc.naturetoursbackend.entities;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 @Entity
 @Table(name = "Itineraries")
@@ -11,20 +15,28 @@ public class Itineraries {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int idItineraries;
+    
     @Column(name = "title", length = 30, nullable = false)
     private String title;
+    
     @Column(name = "startDate", nullable = false)
-    private Date startDate;
+    private LocalDate startDate;
+    
     @Column(name = "endDate", nullable = false)
-    private Date endDate;
+    private LocalDate endDate;
+    
     @Column(name = "numPeople", nullable = false)
     private int numPeople;
+    
     @Column(name = "totalEstimatedPrice", nullable = false)
     private BigDecimal totalEstimatedPrice;
+    
     @Column(name = "status", nullable = false)
     private boolean status = true;
+    
     @Column(name = "createdAt", nullable = false, updatable = false)
     private Date createdAt;
+    
     @Column(name = "updatedAt", nullable = false)
     private Date updatedAt;
 
@@ -35,6 +47,10 @@ public class Itineraries {
     @ManyToOne
     @JoinColumn(name = "idQuizProfiles", nullable = false)
     private QuizProfiles quiz;
+
+    @OneToMany(mappedBy = "itinerary", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
+    private List<ItineraryItems> items = new ArrayList<>();
 
     @PrePersist
     protected void onCreate() {
@@ -51,7 +67,9 @@ public class Itineraries {
     public Itineraries() {
     }
 
-    public Itineraries(int idItineraries, String title, Date startDate, Date endDate, int numPeople, BigDecimal totalEstimatedPrice, boolean status, Date createdAt, Date updatedAt, Users user, QuizProfiles quiz) {
+    public Itineraries(int idItineraries, String title, LocalDate startDate, LocalDate endDate, int numPeople, 
+                       BigDecimal totalEstimatedPrice, boolean status, Date createdAt, Date updatedAt, 
+                       Users user, QuizProfiles quiz, List<ItineraryItems> items) {
         this.idItineraries = idItineraries;
         this.title = title;
         this.startDate = startDate;
@@ -63,6 +81,7 @@ public class Itineraries {
         this.updatedAt = updatedAt;
         this.user = user;
         this.quiz = quiz;
+        this.items = items;
     }
 
     public int getIdItineraries() {
@@ -81,19 +100,19 @@ public class Itineraries {
         this.title = title;
     }
 
-    public Date getStartDate() {
+    public LocalDate getStartDate() {
         return startDate;
     }
 
-    public void setStartDate(Date startDate) {
+    public void setStartDate(LocalDate startDate) {
         this.startDate = startDate;
     }
 
-    public Date getEndDate() {
+    public LocalDate getEndDate() {
         return endDate;
     }
 
-    public void setEndDate(Date endDate) {
+    public void setEndDate(LocalDate endDate) {
         this.endDate = endDate;
     }
 
@@ -151,5 +170,23 @@ public class Itineraries {
 
     public void setQuiz(QuizProfiles quiz) {
         this.quiz = quiz;
+    }
+
+    public List<ItineraryItems> getItems() {
+        return items;
+    }
+
+    public void setItems(List<ItineraryItems> items) {
+        this.items = items;
+    }
+
+    public void addItem(ItineraryItems item) {
+        items.add(item);
+        item.setItinerary(this);
+    }
+
+    public void removeItem(ItineraryItems item) {
+        items.remove(item);
+        item.setItinerary(null);
     }
 }
