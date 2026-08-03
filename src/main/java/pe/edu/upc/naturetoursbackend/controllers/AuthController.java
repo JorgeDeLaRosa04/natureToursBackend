@@ -128,7 +128,7 @@ public class AuthController {
 
             authService.forgotPassword(request.getEmail());
             
-            // Por seguridad, no revelar si el email existe
+
             return ResponseEntity.ok(new MessageResponse(
                 "Si existe una cuenta asociada a ese correo, recibirás instrucciones para recuperar tu contraseña."
             ));

@@ -18,9 +18,7 @@ public class EmailService {
     @Value("${spring.mail.username}")
     private String fromEmail;
 
-    /**
-     * Envía correo de verificación de email
-     */
+
     public void sendVerificationEmail(String to, String token) {
         String subject = "Verifica tu correo electrónico - NatureTours";
         
@@ -38,9 +36,6 @@ public class EmailService {
         sendEmail(to, subject, body);
     }
 
-    /**
-     * Envía correo de recuperación de contraseña
-     */
     public void sendPasswordResetEmail(String to, String token) {
         String subject = "Recuperación de contraseña - NatureTours";
         
@@ -58,9 +53,6 @@ public class EmailService {
         sendEmail(to, subject, body);
     }
 
-    /**
-     * Método genérico para enviar correos
-     */
     private void sendEmail(String to, String subject, String body) {
         SimpleMailMessage message = new SimpleMailMessage();
         message.setFrom(fromEmail);

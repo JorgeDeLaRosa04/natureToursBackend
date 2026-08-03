@@ -37,21 +37,12 @@ public class AuthServiceImpl implements IAuthService {
 
     private final SecureRandom secureRandom = new SecureRandom();
 
-    /**
-     * Genera un token criptográficamente seguro
-     */
     private String generateSecureToken() {
         byte[] randomBytes = new byte[TOKEN_LENGTH];
         secureRandom.nextBytes(randomBytes);
         return Base64.getUrlEncoder().withoutPadding().encodeToString(randomBytes);
     }
 
-    /**
-     * Genera el hash de un token usando SHA-256.
-     * Se usa SHA-256 (en lugar de BCrypt) porque los tokens son aleatorios de alta entropía
-     * y BCrypt limita la entrada a 72 bytes, lo que provocaba el error
-     * "password cannot be more than 72 bytes".
-     */
     private String hashToken(String token) {
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
@@ -62,9 +53,6 @@ public class AuthServiceImpl implements IAuthService {
         }
     }
 
-    /**
-     * Verifica si un token coincide con un hash almacenado (SHA-256).
-     */
     private boolean verifyTokenHash(String token, String storedHash) {
         if (storedHash == null) {
             return false;
@@ -75,18 +63,15 @@ public class AuthServiceImpl implements IAuthService {
         );
     }
 
-    /**
-     * Registra un nuevo usuario con email y contraseña
-     */
     @Override
     @Transactional
     public Users register(String username, String email, String password) {
-        // Verificar si el email ya existe
+
         if (userRepository.findOneByUsername(username) != null) {
             throw new IllegalArgumentException("El nombre de usuario ya está en uso");
         }
 
-        // Buscar por email también
+
         Users existingByEmail = findByEmail(email).orElse(null);
         if (existingByEmail != null) {
             throw new IllegalArgumentException("El correo electrónico ya está registrado");
@@ -100,18 +85,18 @@ public class AuthServiceImpl implements IAuthService {
         user.setEmailVerified(false);
         user.setProvider(Provider.LOCAL);
 
-        // Guardar usuario primero para obtener el ID
+
         Users savedUser = userRepository.save(user);
 
-        // Asignar rol ROLE_USER automáticamente
+
         Role userRole = new Role();
         userRole.setRol("ROLE_USER");
         userRole.setUser(savedUser);
         
-        // Guardar el rol usando la consulta nativa del repositorio
+
         userRepository.insRol("ROLE_USER", savedUser.getId());
 
-        // Generar token de verificación
+
         String verificationToken = generateSecureToken();
         String tokenHash = hashToken(verificationToken);
         LocalDateTime expiration = LocalDateTime.now().plusHours(VERIFICATION_TOKEN_EXPIRATION_HOURS);
@@ -120,21 +105,18 @@ public class AuthServiceImpl implements IAuthService {
         savedUser.setVerificationTokenExpiration(expiration);
         userRepository.save(savedUser);
 
-        // Enviar correo de verificación
+
         try {
             emailService.sendVerificationEmail(email, verificationToken);
         } catch (Exception e) {
-            // Si falla el envío de email, registrar pero no fallar el registro
-            // En producción se podría implementar una cola de reintentos
+
             System.err.println("Error al enviar correo de verificación: " + e.getMessage());
         }
 
         return savedUser;
     }
 
-    /**
-     * Verifica el correo electrónico mediante el token
-     */
+
     @Override
     @Transactional
     public boolean verifyEmail(String token) {
@@ -142,8 +124,7 @@ public class AuthServiceImpl implements IAuthService {
             return false;
         }
 
-        // Buscar todos los usuarios y verificar manualmente (no hay índice para esto)
-        // En producción se debería optimizar con una consulta personalizada
+
         var allUsers = userRepository.findAll();
         for (Users user : allUsers) {
             if (user.getVerificationTokenHash() != null &&
@@ -166,9 +147,7 @@ public class AuthServiceImpl implements IAuthService {
         return false;
     }
 
-    /**
-     * Reenvía el correo de verificación
-     */
+
     @Override
     @Transactional
     public void resendVerificationEmail(String email) {
@@ -188,7 +167,7 @@ public class AuthServiceImpl implements IAuthService {
                 user.setVerificationTokenExpiration(expiration);
                 userRepository.save(user);
 
-                // Enviar nuevo correo
+
                 try {
                     emailService.sendVerificationEmail(email, verificationToken);
                 } catch (Exception e) {
@@ -196,12 +175,9 @@ public class AuthServiceImpl implements IAuthService {
                 }
             }
         }
-        // Por seguridad, no revelar si el email existe o no
+
     }
 
-    /**
-     * Solicita recuperación de contraseña
-     */
     @Override
     @Transactional
     public void forgotPassword(String email) {
@@ -210,9 +186,9 @@ public class AuthServiceImpl implements IAuthService {
         if (userOptional.isPresent()) {
             Users user = userOptional.get();
             
-            // Solo permitir para usuarios LOCAL
+
             if (user.getProvider() == Provider.LOCAL) {
-                // Generar token de recuperación
+
                 String resetToken = generateSecureToken();
                 String tokenHash = hashToken(resetToken);
                 LocalDateTime expiration = LocalDateTime.now().plusMinutes(RESET_PASSWORD_TOKEN_EXPIRATION_MINUTES);
@@ -221,7 +197,7 @@ public class AuthServiceImpl implements IAuthService {
                 user.setResetPasswordTokenExpiration(expiration);
                 userRepository.save(user);
 
-                // Enviar correo de recuperación
+
                 try {
                     emailService.sendPasswordResetEmail(email, resetToken);
                 } catch (Exception e) {
@@ -229,12 +205,10 @@ public class AuthServiceImpl implements IAuthService {
                 }
             }
         }
-        // Por seguridad, no revelar si el email existe o no
+
     }
 
-    /**
-     * Restablece la contraseña usando el token
-     */
+
     @Override
     @Transactional
     public boolean resetPassword(String token, String newPassword) {
@@ -243,21 +217,21 @@ public class AuthServiceImpl implements IAuthService {
             return false;
         }
 
-        // Validar política de contraseña simple
+
         if (newPassword.length() < 8) {
             throw new IllegalArgumentException("La contraseña debe tener al menos 8 caracteres");
         }
 
-        // Buscar usuario con token válido
+
         var allUsers = userRepository.findAll();
         for (Users user : allUsers) {
             if (user.getResetPasswordTokenHash() != null &&
                 user.getResetPasswordTokenExpiration() != null &&
                 user.getResetPasswordTokenExpiration().isAfter(LocalDateTime.now())) {
                 
-                // Verificar el hash del token (SHA-256)
+
                 if (verifyTokenHash(token, user.getResetPasswordTokenHash())) {
-                    // Token válido, actualizar contraseña
+
                     user.setPassword(passwordEncoder.encode(newPassword));
                     user.setResetPasswordTokenHash(null);
                     user.setResetPasswordTokenExpiration(null);
@@ -270,9 +244,7 @@ public class AuthServiceImpl implements IAuthService {
         return false;
     }
 
-    /**
-     * Busca usuario por email
-     */
+
     @Override
     public Optional<Users> findByEmail(String email) {
         var allUsers = userRepository.findAll();
@@ -284,9 +256,7 @@ public class AuthServiceImpl implements IAuthService {
         return Optional.empty();
     }
 
-    /**
-     * Busca usuario por username
-     */
+
     @Override
     public Optional<Users> findByUsername(String username) {
         Users user = userRepository.findOneByUsername(username);
