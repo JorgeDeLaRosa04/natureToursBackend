@@ -1,5 +1,6 @@
 package pe.edu.upc.naturetoursbackend.servicesinterfaces;
 
+import pe.edu.upc.naturetoursbackend.dtos.ItinerariesDTO;
 import pe.edu.upc.naturetoursbackend.entities.Itineraries;
 
 import java.util.List;
@@ -11,4 +12,5 @@ public interface IItinerariesService {
     public Optional<Itineraries> listId(int id);
     public void update(Itineraries i);
     public void delete(int id);
+    public Itineraries createItinerary(ItinerariesDTO dto);
 }

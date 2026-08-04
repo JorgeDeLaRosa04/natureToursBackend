@@ -3,8 +3,10 @@ import jakarta.persistence.*;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
+import com.fasterxml.jackson.annotation.JsonBackReference;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.Date;
 
 @Entity
@@ -16,6 +18,7 @@ public class ItineraryItems {
 
     @ManyToOne
     @JoinColumn(name = "itinerary_id", nullable = false)
+    @JsonBackReference
     private Itineraries itinerary;
 
     @ManyToOne
@@ -23,7 +26,7 @@ public class ItineraryItems {
     private Tours tour;
 
     @Column(name = "planned_date", nullable = false)
-    private Date plannedDate;
+    private LocalDate plannedDate;
 
     @Column(name = "num_people_for_tour", nullable = false)
     private int numPeopleForTour;
@@ -31,10 +34,28 @@ public class ItineraryItems {
     @Column(name = "price_at_moment", nullable = false, precision = 10, scale = 2)
     private BigDecimal priceAtMoment;
 
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private LocalDate createdAt;
+
+    @Column(name = "updated_at", nullable = false)
+    private LocalDate updatedAt;
+
+    @PrePersist
+    protected void onCreate() {
+        LocalDate now = LocalDate.now();
+        this.createdAt = now;
+        this.updatedAt = now;
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        this.updatedAt = LocalDate.now();
+    }
+
     public ItineraryItems() {
     }
 
-    public ItineraryItems(int id, Itineraries itinerary, Tours tour, Date plannedDate, int numPeopleForTour, BigDecimal priceAtMoment) {
+    public ItineraryItems(int id, Itineraries itinerary, Tours tour, LocalDate plannedDate, int numPeopleForTour, BigDecimal priceAtMoment) {
         this.id = id;
         this.itinerary = itinerary;
         this.tour = tour;
@@ -67,11 +88,11 @@ public class ItineraryItems {
         this.tour = tour;
     }
 
-    public Date getPlannedDate() {
+    public LocalDate getPlannedDate() {
         return plannedDate;
     }
 
-    public void setPlannedDate(Date plannedDate) {
+    public void setPlannedDate(LocalDate plannedDate) {
         this.plannedDate = plannedDate;
     }
 
@@ -89,5 +110,21 @@ public class ItineraryItems {
 
     public void setPriceAtMoment(BigDecimal priceAtMoment) {
         this.priceAtMoment = priceAtMoment;
+    }
+
+    public LocalDate getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDate createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public LocalDate getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(LocalDate updatedAt) {
+        this.updatedAt = updatedAt;
     }
 }

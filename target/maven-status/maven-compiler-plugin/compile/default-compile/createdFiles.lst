@@ -16,6 +16,7 @@ pe\edu\upc\naturetoursbackend\servicesinterfaces\IUserService.class
 pe\edu\upc\naturetoursbackend\controllers\JwtAuthenticationController.class
 pe\edu\upc\naturetoursbackend\servicesinterfaces\IItinerariesService.class
 pe\edu\upc\naturetoursbackend\entities\Users.class
+pe\edu\upc\naturetoursbackend\dtos\ItineraryItemDTO.class
 pe\edu\upc\naturetoursbackend\dtos\ForgotPasswordRequest.class
 pe\edu\upc\naturetoursbackend\repositories\IItinerariesRepository.class
 pe\edu\upc\naturetoursbackend\dtos\JwtResponseDTO.class

@@ -1,19 +1,34 @@
 package pe.edu.upc.naturetoursbackend.dtos;
 
 import java.math.BigDecimal;
-import java.util.Date;
+import java.time.LocalDate;
+import java.util.List;
 
 public class ItinerariesDTO {
     private int idItineraries;
     private String title;
-    private Date startDate;
-    private Date endDate;
+    private LocalDate startDate;
+    private LocalDate endDate;
     private int numPeople;
     private BigDecimal totalEstimatedPrice;
-    private Date createdAt;
-    private Date updatedAt;
     private Long idUser;
     private int idQuiz;
+    private List<ItineraryItemDTO> items;
+
+    public ItinerariesDTO() {
+    }
+
+    public ItinerariesDTO(int idItineraries, String title, LocalDate startDate, LocalDate endDate, int numPeople, BigDecimal totalEstimatedPrice, Long idUser, int idQuiz, List<ItineraryItemDTO> items) {
+        this.idItineraries = idItineraries;
+        this.title = title;
+        this.startDate = startDate;
+        this.endDate = endDate;
+        this.numPeople = numPeople;
+        this.totalEstimatedPrice = totalEstimatedPrice;
+        this.idUser = idUser;
+        this.idQuiz = idQuiz;
+        this.items = items;
+    }
 
     public int getIdItineraries() {
         return idItineraries;
@@ -31,19 +46,19 @@ public class ItinerariesDTO {
         this.title = title;
     }
 
-    public Date getStartDate() {
+    public LocalDate getStartDate() {
         return startDate;
     }
 
-    public void setStartDate(Date startDate) {
+    public void setStartDate(LocalDate startDate) {
         this.startDate = startDate;
     }
 
-    public Date getEndDate() {
+    public LocalDate getEndDate() {
         return endDate;
     }
 
-    public void setEndDate(Date endDate) {
+    public void setEndDate(LocalDate endDate) {
         this.endDate = endDate;
     }
 
@@ -63,22 +78,6 @@ public class ItinerariesDTO {
         this.totalEstimatedPrice = totalEstimatedPrice;
     }
 
-    public Date getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(Date createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public Date getUpdatedAt() {
-        return updatedAt;
-    }
-
-    public void setUpdatedAt(Date updatedAt) {
-        this.updatedAt = updatedAt;
-    }
-
     public Long getIdUser() {
         return idUser;
     }
@@ -93,5 +92,13 @@ public class ItinerariesDTO {
 
     public void setIdQuiz(int idQuiz) {
         this.idQuiz = idQuiz;
+    }
+
+    public List<ItineraryItemDTO> getItems() {
+        return items;
+    }
+
+    public void setItems(List<ItineraryItemDTO> items) {
+        this.items = items;
     }
 }
