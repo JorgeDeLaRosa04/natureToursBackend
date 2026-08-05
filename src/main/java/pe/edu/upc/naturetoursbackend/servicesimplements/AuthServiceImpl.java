@@ -90,11 +90,11 @@ public class AuthServiceImpl implements IAuthService {
 
 
         Role userRole = new Role();
-        userRole.setRol("ROLE_USER");
+        userRole.setRol("USER");
         userRole.setUser(savedUser);
         
 
-        userRepository.insRol("ROLE_USER", savedUser.getId());
+        userRepository.insRol("USER", savedUser.getId());
 
 
         String verificationToken = generateSecureToken();
