@@ -64,12 +64,10 @@ public class WebSecurityConfig {
                                 "/swagger-ui.html",
                                 "/v3/api-docs/**",
                                 "/webjars/**",
-                                "/api-tour/**",
-                                "/api-itineraries/**",
-                                "/api-quiz/**",
-                                "/api-users/**",
-                                "/api/auth/**"
+                                "/api/auth/**",
+                                "/api-quiz/**"
                         ).permitAll()
+                        .requestMatchers("/api-tour/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .httpBasic(Customizer.withDefaults())

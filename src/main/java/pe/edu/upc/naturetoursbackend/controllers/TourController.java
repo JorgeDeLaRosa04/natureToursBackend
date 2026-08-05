@@ -22,7 +22,9 @@ import java.util.stream.Collectors;
 public class TourController {
     @Autowired
     private ITourService tS;
+    
     @GetMapping("/lista")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<ToursDTO>> listar() {
         ModelMapper m = new ModelMapper();
 
@@ -39,6 +41,7 @@ public class TourController {
     }
 
     @PostMapping("/nuevo")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> registrar(@RequestBody ToursDTO dto){
 
         ModelMapper m=new ModelMapper();
@@ -64,6 +67,7 @@ public class TourController {
     }
 
     @PutMapping("/actualiza")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<String> actualizar(@RequestBody ToursDTO dto) {
 
         Optional<Tours> existente = tS.listId(dto.getId());
@@ -97,6 +101,7 @@ public class TourController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<String> eliminar(@PathVariable int id) {
         Optional<Tours> tour = tS.listId(id);
 

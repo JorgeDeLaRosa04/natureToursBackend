@@ -56,6 +56,12 @@ public class UserServiceImpl implements IUserService {
         uR.deleteById(id);
     }
 
+    @Override
+    public Optional<Users> findByEmail(String email) {
+        Users user = uR.findOneByEmail(email);
+        return Optional.ofNullable(user);
+    }
+
     private boolean isPasswordHashed(String password) {
         return password != null && (password.startsWith("$2a$") || password.startsWith("$2b$") || password.startsWith("$2y$"));
     }

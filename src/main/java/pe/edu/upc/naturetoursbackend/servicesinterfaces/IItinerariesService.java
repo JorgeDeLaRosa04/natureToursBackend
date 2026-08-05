@@ -12,5 +12,5 @@ public interface IItinerariesService {
     public Optional<Itineraries> listId(int id);
     public void update(Itineraries i);
     public void delete(int id);
-    public Itineraries createItinerary(ItinerariesDTO dto);
+    public Itineraries createItinerary(ItinerariesDTO dto, Long currentUserId);
 }

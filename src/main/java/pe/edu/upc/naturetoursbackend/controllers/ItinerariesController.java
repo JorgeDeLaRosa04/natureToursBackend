@@ -4,6 +4,9 @@ import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import pe.edu.upc.naturetoursbackend.dtos.ItinerariesDTO;
 import pe.edu.upc.naturetoursbackend.dtos.ItineraryItemDTO;
@@ -34,6 +37,7 @@ public class ItinerariesController {
     private IQuizProfileService qS;
 
     @GetMapping("/lista")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<ItinerariesDTO>> listar() {
         ModelMapper m = new ModelMapper();
 
@@ -52,7 +56,35 @@ public class ItinerariesController {
     @PostMapping("/crear")
     public ResponseEntity<?> crearItinerario(@RequestBody ItinerariesDTO dto) {
         try {
-            Itineraries itineraryCreated = iS.createItinerary(dto);
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            Long currentUserId = null;
+            String currentUserEmail = null;
+            
+            // Si está autenticado, obtener el usuario actual
+            if (authentication != null && authentication.isAuthenticated() 
+                    && !"anonymousUser".equals(authentication.getPrincipal())) {
+                currentUserEmail = authentication.getName();
+                Optional<Users> userOptional = uS.findByEmail(currentUserEmail);
+                if (userOptional.isPresent()) {
+                    currentUserId = userOptional.get().getId();
+                }
+            }
+            
+            // Si no está logueado o no se proporcionó idUser, usar itinerario de invitado (user_id = NULL)
+            // El email del formulario será el identificador
+            if (dto.getIdUser() == null) {
+                // Itinerario de invitado - user_id será NULL
+                // El email puede venir en el DTO para identificación futura
+            } else if (currentUserId != null && !dto.getIdUser().equals(currentUserId)) {
+                // Validar que un USER normal solo pueda crear itinerarios para sí mismo
+                if (!authentication.getAuthorities().stream()
+                        .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"))) {
+                    return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                            .body("No tiene permisos para crear itinerarios para otro usuario");
+                }
+            }
+            
+            Itineraries itineraryCreated = iS.createItinerary(dto, currentUserId);
             ModelMapper m = new ModelMapper();
             ItinerariesDTO responseDTO = mapToDTO(itineraryCreated, m);
             return ResponseEntity.status(HttpStatus.CREATED).body(responseDTO);
@@ -65,25 +97,73 @@ public class ItinerariesController {
 
     @GetMapping("/{id}")
     public ResponseEntity<?> buscarPorId(@PathVariable int id) {
-        ModelMapper m = new ModelMapper();
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        
         Optional<Itineraries> itinerario = iS.listId(id);
-
-        if (itinerario.isPresent()) {
-            ItinerariesDTO dto = mapToDTO(itinerario.get(), m);
-            return ResponseEntity.ok(dto);
-        } else {
+        if (itinerario.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body("Itinerario no encontrado");
         }
+        
+        Itineraries itinerary = itinerario.get();
+        
+        // Validar que USER solo pueda ver sus propios itinerarios
+        if (authentication != null && authentication.isAuthenticated() 
+                && !"anonymousUser".equals(authentication.getPrincipal())) {
+            
+            boolean isAdmin = authentication.getAuthorities().stream()
+                    .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+            
+            if (!isAdmin) {
+                String currentUserEmail = authentication.getName();
+                Optional<Users> currentUser = uS.findByEmail(currentUserEmail);
+                
+                if (currentUser.isPresent()) {
+                    // Si el itinerario tiene usuario asociado, validar que sea el mismo
+                    if (itinerary.getUser() != null && !itinerary.getUser().getId().equals(currentUser.get().getId())) {
+                        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                                .body("No tiene permisos para ver este itinerario");
+                    }
+                }
+            }
+        }
+        
+        ModelMapper m = new ModelMapper();
+        ItinerariesDTO dto = mapToDTO(itinerario.get(), m);
+        return ResponseEntity.ok(dto);
     }
 
     @PutMapping("/actualiza")
     public ResponseEntity<String> actualizar(@RequestBody ItinerariesDTO dto) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
         Optional<Itineraries> existente = iS.listId(dto.getIdItineraries());
         if (existente.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body("Itinerario no encontrado");
+        }
+        
+        Itineraries existingItinerary = existente.get();
+        
+        // Validar que USER solo pueda actualizar sus propios itinerarios
+        if (authentication != null && authentication.isAuthenticated() 
+                && !"anonymousUser".equals(authentication.getPrincipal())) {
+            
+            boolean isAdmin = authentication.getAuthorities().stream()
+                    .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+            
+            if (!isAdmin) {
+                String currentUserEmail = authentication.getName();
+                Optional<Users> currentUser = uS.findByEmail(currentUserEmail);
+                
+                if (currentUser.isPresent()) {
+                    // Si el itinerario tiene usuario asociado, validar que sea el mismo
+                    if (existingItinerary.getUser() != null && !existingItinerary.getUser().getId().equals(currentUser.get().getId())) {
+                        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                                .body("No tiene permisos para actualizar este itinerario");
+                    }
+                }
+            }
         }
 
         // Validación: endDate no debe ser menor a startDate
@@ -135,15 +215,39 @@ public class ItinerariesController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<String> eliminar(@PathVariable int id) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        
         Optional<Itineraries> itinerario = iS.listId(id);
-
-        if (itinerario.isPresent()) {
-            iS.delete(id);
-            return ResponseEntity.ok("Itinerario eliminado correctamente");
-        } else {
+        if (itinerario.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body("Itinerario no encontrado");
         }
+        
+        Itineraries existingItinerary = itinerario.get();
+        
+        // Validar que USER solo pueda eliminar sus propios itinerarios
+        if (authentication != null && authentication.isAuthenticated() 
+                && !"anonymousUser".equals(authentication.getPrincipal())) {
+            
+            boolean isAdmin = authentication.getAuthorities().stream()
+                    .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+            
+            if (!isAdmin) {
+                String currentUserEmail = authentication.getName();
+                Optional<Users> currentUser = uS.findByEmail(currentUserEmail);
+                
+                if (currentUser.isPresent()) {
+                    // Si el itinerario tiene usuario asociado, validar que sea el mismo
+                    if (existingItinerary.getUser() != null && !existingItinerary.getUser().getId().equals(currentUser.get().getId())) {
+                        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                                .body("No tiene permisos para eliminar este itinerario");
+                    }
+                }
+            }
+        }
+        
+        iS.delete(id);
+        return ResponseEntity.ok("Itinerario eliminado correctamente");
     }
 
     private ItinerariesDTO mapToDTO(Itineraries itinerary, ModelMapper mapper) {

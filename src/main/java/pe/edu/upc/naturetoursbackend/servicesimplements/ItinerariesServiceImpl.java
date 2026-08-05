@@ -16,7 +16,6 @@ import pe.edu.upc.naturetoursbackend.servicesinterfaces.IQuizProfileService;
 import pe.edu.upc.naturetoursbackend.servicesinterfaces.IUserService;
 
 import java.math.BigDecimal;
-import java.sql.Date;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -62,7 +61,7 @@ public class ItinerariesServiceImpl implements IItinerariesService {
     }
 
     @Override
-    public Itineraries createItinerary(ItinerariesDTO dto) {
+    public Itineraries createItinerary(ItinerariesDTO dto, Long currentUserId) {
 
         if (dto.getEndDate() != null && dto.getStartDate() != null) {
             if (dto.getEndDate().isBefore(dto.getStartDate())) {
@@ -79,11 +78,16 @@ public class ItinerariesServiceImpl implements IItinerariesService {
         itinerary.setStatus(true);
 
 
-        Optional<Users> userOptional = uS.listId(dto.getIdUser());
-        if (userOptional.isEmpty()) {
-            throw new IllegalArgumentException("Usuario con ID " + dto.getIdUser() + " no encontrado");
+        // Soporte para itinerarios de invitado (user_id = NULL)
+        // Si dto.getIdUser() es null o 0, se crea como itinerario de invitado
+        if (dto.getIdUser() != null && dto.getIdUser() > 0) {
+            Optional<Users> userOptional = uS.listId(dto.getIdUser());
+            if (userOptional.isEmpty()) {
+                throw new IllegalArgumentException("Usuario con ID " + dto.getIdUser() + " no encontrado");
+            }
+            itinerary.setUser(userOptional.get());
         }
-        itinerary.setUser(userOptional.get());
+        // Si dto.getIdUser() es null o 0, el user queda como NULL (itinerario de invitado)
 
 
         Optional<QuizProfiles> quizOptional = qS.listId(dto.getIdQuiz());
