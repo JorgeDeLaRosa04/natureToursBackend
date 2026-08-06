@@ -3,6 +3,7 @@ package pe.edu.upc.naturetoursbackend.controllers;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import pe.edu.upc.naturetoursbackend.dtos.UserInsertDTO;
 import pe.edu.upc.naturetoursbackend.dtos.UserUpdateDTO;
@@ -23,6 +24,7 @@ public class UsersController {
     private IUserService userService;
 
     @GetMapping("/listar")
+    @PreAuthorize("hasAuthority('ADMIN')")
     public ResponseEntity<List<UserResponseDTO>> list() {
         List<Users> users = userService.list();
         List<UserResponseDTO> responseDTOs = new ArrayList<>();
@@ -33,6 +35,7 @@ public class UsersController {
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasAuthority('ADMIN') OR hasAuthority('USER')")
     public ResponseEntity<UserResponseDTO> getById(@PathVariable Long id) {
         Optional<Users> userOptional = userService.listId(id);
         if (userOptional.isPresent()) {
@@ -76,6 +79,7 @@ public class UsersController {
     */
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAuthority('ADMIN')")
     public ResponseEntity<String> eliminar(@PathVariable Long id) {
         Optional<Users> user = userService.listId(id);
 

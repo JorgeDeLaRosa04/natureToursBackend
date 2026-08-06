@@ -14,7 +14,7 @@ public class Itineraries {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int idItineraries;
-    @Column(name = "title", length = 30, nullable = false)
+    @Column(name = "title", length = 100, nullable = false)
     private String title;
     @Column(name = "startDate", nullable = false)
     private LocalDate startDate;

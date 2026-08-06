@@ -39,6 +39,7 @@ pe\edu\upc\naturetoursbackend\servicesimplements\UserServiceImpl.class
 pe\edu\upc\naturetoursbackend\servicesimplements\ItinerariesServiceImpl.class
 pe\edu\upc\naturetoursbackend\securities\JwtAuthenticationEntryPoint.class
 pe\edu\upc\naturetoursbackend\dtos\ItinerariesDTO.class
+pe\edu\upc\naturetoursbackend\securities\SecurityUtils.class
 pe\edu\upc\naturetoursbackend\dtos\UserInsertDTO.class
 pe\edu\upc\naturetoursbackend\controllers\UsersController.class
 pe\edu\upc\naturetoursbackend\servicesinterfaces\IQuizProfileService.class

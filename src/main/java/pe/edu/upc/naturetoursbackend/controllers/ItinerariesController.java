@@ -4,6 +4,7 @@ import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import pe.edu.upc.naturetoursbackend.dtos.ItinerariesDTO;
 import pe.edu.upc.naturetoursbackend.dtos.ItineraryItemDTO;
@@ -34,6 +35,7 @@ public class ItinerariesController {
     private IQuizProfileService qS;
 
     @GetMapping("/lista")
+    @PreAuthorize("hasAuthority('ADMIN')")
     public ResponseEntity<List<ItinerariesDTO>> listar() {
         ModelMapper m = new ModelMapper();
 
@@ -64,6 +66,7 @@ public class ItinerariesController {
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasAuthority('ADMIN') OR hasAuthority('USER')")
     public ResponseEntity<?> buscarPorId(@PathVariable int id) {
         ModelMapper m = new ModelMapper();
         Optional<Itineraries> itinerario = iS.listId(id);
@@ -78,6 +81,7 @@ public class ItinerariesController {
     }
 
     @PutMapping("/actualiza")
+    @PreAuthorize("hasAuthority('ADMIN') OR hasAuthority('USER')")
     public ResponseEntity<String> actualizar(@RequestBody ItinerariesDTO dto) {
 
         Optional<Itineraries> existente = iS.listId(dto.getIdItineraries());
@@ -134,6 +138,7 @@ public class ItinerariesController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAuthority('ADMIN') OR hasAuthority('USER')")
     public ResponseEntity<String> eliminar(@PathVariable int id) {
         Optional<Itineraries> itinerario = iS.listId(id);
 
@@ -151,19 +156,16 @@ public class ItinerariesController {
         dto.setIdItineraries(itinerary.getIdItineraries());
         dto.setTitle(itinerary.getTitle());
 
-        // Ya no se necesita cast: la entidad ahora expone LocalDate directamente
         dto.setStartDate(itinerary.getStartDate());
         dto.setEndDate(itinerary.getEndDate());
 
         dto.setNumPeople(itinerary.getNumPeople());
         dto.setTotalEstimatedPrice(itinerary.getTotalEstimatedPrice());
 
-        // Obtener idUser de forma segura (Users.id es Long)
         if (itinerary.getUser() != null) {
             dto.setIdUser(itinerary.getUser().getId());
         }
 
-        // Obtener idQuiz de forma segura
         if (itinerary.getQuiz() != null) {
             dto.setIdQuiz(itinerary.getQuiz().getIdQuizProfiles());
         }
@@ -186,7 +188,6 @@ public class ItinerariesController {
             dto.setTourId(item.getTour().getId());
         }
 
-        // Ya no se necesita cast: getPlannedDate() ahora devuelve LocalDate
         dto.setPlannedDate(item.getPlannedDate());
 
         dto.setNumPeopleForTour(item.getNumPeopleForTour());

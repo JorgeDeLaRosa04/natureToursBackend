@@ -19,7 +19,7 @@ public class QuizProfiles {
     @Column(name = "createdAt", nullable = false, updatable = false)
     private Date createdAt;
     @ManyToOne
-    @JoinColumn(name = "idUser", nullable = false)
+    @JoinColumn(name = "idUser", nullable = true)
     private Users user;
 
     @PrePersist

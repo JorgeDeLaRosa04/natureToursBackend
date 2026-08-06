@@ -34,6 +34,7 @@ C:\Users\jorge\OneDrive\Documentos\TambopataNatureTours\natureToursBackend\src\m
 C:\Users\jorge\OneDrive\Documentos\TambopataNatureTours\natureToursBackend\src\main\java\pe\edu\upc\naturetoursbackend\securities\JwtRequestFilter.java
 C:\Users\jorge\OneDrive\Documentos\TambopataNatureTours\natureToursBackend\src\main\java\pe\edu\upc\naturetoursbackend\securities\JwtTokenUtil.java
 C:\Users\jorge\OneDrive\Documentos\TambopataNatureTours\natureToursBackend\src\main\java\pe\edu\upc\naturetoursbackend\securities\OpenApiConfig.java
+C:\Users\jorge\OneDrive\Documentos\TambopataNatureTours\natureToursBackend\src\main\java\pe\edu\upc\naturetoursbackend\securities\SecurityUtils.java
 C:\Users\jorge\OneDrive\Documentos\TambopataNatureTours\natureToursBackend\src\main\java\pe\edu\upc\naturetoursbackend\securities\WebSecurityConfig.java
 C:\Users\jorge\OneDrive\Documentos\TambopataNatureTours\natureToursBackend\src\main\java\pe\edu\upc\naturetoursbackend\servicesimplements\AuthServiceImpl.java
 C:\Users\jorge\OneDrive\Documentos\TambopataNatureTours\natureToursBackend\src\main\java\pe\edu\upc\naturetoursbackend\servicesimplements\EmailService.java
